@@ -1,5 +1,5 @@
 #variavies
-nome = int (input("Digite seu nome: "))
+nome =  (input("Digite seu nome: "))
 peso = float(input("Digite seu peso em kg (ex: 70.5): "))
 altura = float(input("Digite sua altura em metros (ex: 1.75): "))
 
