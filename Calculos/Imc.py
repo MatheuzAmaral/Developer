@@ -22,4 +22,4 @@ elif 25 <= imc < 30:
 elif 30 <= imc < 40:
     print("Classificação: Obesidade")
 else:
-    print("Classificação: Obesidade Grave")
+    print("Classificação: Obesidade Grav")

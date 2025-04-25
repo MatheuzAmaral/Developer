@@ -15,7 +15,7 @@ if media >= 7:
     print("Você foi aprovado")
 
 else:
-    print("Você foi reprovado")
+    print("Você foi reprovad")
 
 
 
