@@ -1,53 +1,131 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+    background: #f4f4f4;
+}
+
+h1 {
+    background-color: #ff6600;
+    color: white;
     margin: 0;
     padding: 20px;
     text-align: center;
 }
 
-h1 {
-    color: #ff6600;
+.container {
+    display: flex;
+    min-height: calc(100vh - 80px);
 }
 
-section {
-    background: #fff;
-    margin: 20px auto;
-    padding: 15px;
-    border-radius: 10px;
-    width: 300px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+/* Sidebar de categorias */
+.categorias {
+    background: white;
+    width: 200px;
+    padding: 20px;
+    border-right: 1px solid #ccc;
 }
 
-.item {
-    background: #eee;
-    margin: 10px 0;
-    padding: 10px;
+.categoria {
+    display: flex;
+    align-items: center;
     cursor: pointer;
-    border-radius: 5px;
+    margin-bottom: 20px;
 }
 
-.item:hover {
-    background: #ddd;
+.categoria img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
 }
 
-button {
+.categoria span {
+    font-size: 16px;
+}
+
+/* Produtos */
+.produtos {
+    flex: 2;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.produto {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.produto img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.produto h3 {
+    margin: 10px 0 5px;
+    font-size: 16px;
+}
+
+.produto p {
+    margin: 5px 0;
+    font-weight: bold;
+}
+
+.produto button {
     background-color: #ff6600;
     color: white;
     border: none;
-    padding: 15px 20px;
-    margin-top: 20px;
-    font-size: 16px;
-    border-radius: 8px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin-top: 8px;
     cursor: pointer;
 }
 
-button:hover {
-    background-color: #e65c00;
+.produto button:hover {
+    background-color: #cc5200;
 }
 
-select {
+/* Pedido */
+.pedido {
+    background: white;
+    width: 300px;
+    padding: 20px;
+    border-left: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.pedido ul {
+    list-style: none;
+    padding: 0;
+}
+
+.pedido li {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.remover {
+    background: none;
+    color: red;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.remover:hover {
+    color: darkred;
+}
+
+button {
+    margin-top: 20px;
     padding: 10px;
-    width: 100%;
-    margin-top: 10px;
+    font-size: 16px;
 }

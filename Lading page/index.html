@@ -4,31 +4,52 @@
     <meta charset="UTF-8">
     <title>Totem de Atendimento - Restaurante</title>
     <link rel="stylesheet" href="style.css">
-    <script src="script.js" defer></script>
 </head>
 <body>
 
     <h1>🍔 Totem de Atendimento</h1>
 
-    <section id="menu">
-        <h2>Cardápio</h2>
-        <div class="item" onclick="adicionarProduto('Hambúrguer', 20)">
-            🍔 Hambúrguer - R$20,00
-        </div>
-        <div class="item" onclick="adicionarProduto('Pizza', 30)">
-            🍕 Pizza - R$30,00
-        </div>
-        <div class="item" onclick="adicionarProduto('Refrigerante', 8)">
-            🥤 Refrigerante - R$8,00
-        </div>
-        <div class="item" onclick="adicionarProduto('Batata Frita', 12)">
-            🍟 Batata Frita - R$12,00
-        </div>
-    </section>
+    <div class="container">
+        <!-- Sidebar de Categorias -->
+        <aside class="categorias">
+            <h2>Categorias</h2>
+            <div class="categoria" onclick="mostrarProdutos('hamburgueres')">
+                <img src="Img/Hamburguer.jpg" alt="Hambúrguer">
+                <span>Hambúrgueres</span>
+            </div>
+            <div class="categoria" onclick="mostrarProdutos('sorvetes')">
+                <img src="Img/sorvete.jpg" alt="Sorvete">
+                <span>Sorvetes</span>
+            </div>
+            <div class="categoria" onclick="mostrarProdutos('refrigerantes')">
+                <img src="Img/refri.jpg" alt="Refrigerante">
+                <span>Refrigerantes</span>
+            </div>
+        </aside>
 
-    <section id="pedido">
-        <h2>Seu Pedido</h2>
-        <ul id="lista-pedido">
-            <!-- Produtos selecionados vão aparecer aqui -->
-        </ul>
-        <p><strong>Total:</strong> R$<span id
+        <!-- Área de Produtos -->
+        <main class="produtos" id="produtos">
+            <!-- Produtos aparecerão aqui -->
+            <p>Selecione uma categoria para ver os produtos.</p>
+        </main>
+
+        <!-- Carrinho de Pedido -->
+        <section class="pedido">
+            <h2>Seu Pedido</h2>
+            <ul id="lista-pedido"></ul>
+            <p><strong>Total:</strong> R$<span id="total">0.00</span></p>
+
+            <h2>Forma de Pagamento</h2>
+            <select id="forma-pagamento">
+                <option value="dinheiro">Dinheiro</option>
+                <option value="cartao">Cartão</option>
+                <option value="pix">PIX</option>
+            </select>
+
+            <button onclick="finalizarPedido()">Finalizar Pedido</button>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
