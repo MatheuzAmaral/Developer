@@ -1,0 +1,6 @@
+Flask
+Flask-Login
+Flask-WTF
+WTForms
+
+pip install -r requirements.txt

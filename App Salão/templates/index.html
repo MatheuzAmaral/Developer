@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><link rel="stylesheet" href="/static/style.css"></head><body>
+  <h1>Agendamentos</h1>
+  <form method="post">{{ form.hidden_tag() }}
+    <p>{{ form.client.label }} {{ form.client() }}</p>
+    <p>{{ form.date.label }} {{ form.date() }}</p>
+    <p>{{ form.time.label }} {{ form.time() }}</p>
+    <p>{{ form.submit() }}</p>
+  </form>
+  <ul>
+    {% for client, date, time in appointments %}
+      <li>{{ date }} {{ time }} — {{ client }}</li>
+    {% else %}
+      <li>Sem agendamentos</li>
+    {% endfor %}
+  </ul>
+  <a href="/logout">Sair</a>
+</body></html>
