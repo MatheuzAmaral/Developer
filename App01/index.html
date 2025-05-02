@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agendamento - Salão Feminino</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #820ad1;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #ffffff;
+    }
+
+    .container {
+      background-color: #1f1f1f;
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      color: #ccc;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+
+    button {
+      background-color: #820ad1;
+      color: white;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #5e0a9f;
+    }
+
+    .whatsapp {
+      background-color: #25d366;
+    }
+
+    .mensagem {
+      margin-top: 15px;
+      background: #2b2b2b;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+
+    .valor {
+      margin-top: 5px;
+      font-weight: bold;
+      color: #ffd700;
+    }
+
+    .admin-panel {
+      margin-top: 30px;
+      background: #2b2b2b;
+      padding: 15px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 500px;
+      display: none;
+    }
+
+    .admin-panel h2 {
+      margin-bottom: 10px;
+    }
+
+    .admin-button {
+      margin-top: 20px;
+      background-color: #444;
+      width: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #555;
+      padding: 8px;
+      text-align: left;
+      color: #ddd;
+    }
+
+    th {
+      background-color: #3a3a3a;
+    }
+
+    .admin-password {
+      margin-top: 20px;
+      background-color: #444;
+      padding: 10px;
+      border-radius: 5px;
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Agende seu horário</h1>
+  <div class="container">
+    <label for="nome">Nome:</label>
+    <input type="text" id="nome" required />
+
+    <label for="servico">Serviço:</label>
+    <select id="servico" onchange="mostrarValor()">
+      <option value="Escova simples">Escova simples</option>
+      <option value="Hidratação capilar">Hidratação capilar</option>
+      <option value="Corte feminino">Corte feminino</option>
+      <option value="Progressiva">Progressiva</option>
+      <option value="Luzes">Luzes</option>
+      <option value="Coloração">Coloração</option>
+      <option value="Sobrancelha">Sobrancelha</option>
+      <option value="Maquiagem">Maquiagem</option>
+      <option value="Manicure e pedicure">Manicure e pedicure</option>
+      <option value="Spa dos pés">Spa dos pés</option>
+    </select>
+
+    <div class="valor" id="valorServico"></div>
+
+    <label for="data">Data:</label>
+    <input type="date" id="data" required onchange="atualizarHorarios()" />
+
+    <label for="hora">Horário:</label>
+    <select id="hora" required></select>
+
+    <button onclick="agendar()">Confirmar</button>
+    <button class="whatsapp" onclick="enviarWhatsApp()">Enviar via WhatsApp</button>
+
+    <div class="mensagem" id="mensagem"></div>
+  </div>
+
+  <div class="admin-password">
+    <label for="senhaAdmin">Senha Administrador:</label>
+    <input type="password" id="senhaAdmin" placeholder="Digite a senha" />
+    <button onclick="verificarSenha()">Entrar como Administrador</button>
+  </div>
+
+  <button class="admin-button" onclick="mostrarAgendamentos()" style="display:none;">📋 Ver agendamentos</button>
+  <div class="admin-panel" id="painelAdmin">
+    <h2>Agendamentos Salvos</h2>
+    <table id="tabelaAgendamentos">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Serviço</th>
+          <th>Data</th>
+          <th>Hora</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const horarioInicio = 9;
+    const horarioFim = 18;
+
+    const precos = {
+      "Escova simples": 40,
+      "Hidratação capilar": 70,
+      "Corte feminino": 50,
+      "Progressiva": 200,
+      "Luzes": 250,
+      "Coloração": 120,
+      "Sobrancelha": 25,
+      "Maquiagem": 100,
+      "Manicure e pedicure": 60,
+      "Spa dos pés": 80
+    };
+
+    const senhaCorreta = "1234"; // Senha de acesso para o painel admin
+
+    function mostrarValor() {
+      const servico = document.getElementById('servico').value;
+      const valorDiv = document.getElementById('valorServico');
+      valorDiv.textContent = `Valor: R$ ${precos[servico].toFixed(2).replace('.', ',')}`;
+    }
+
+    function gerarHorariosDisponiveis(dataSelecionada) {
+      const horarios = [];
+      for (let h = horarioInicio; h < horarioFim; h++) {
+        const horaStr = `${String(h).padStart(2, '0')}:00`;
+        horarios.push(horaStr);
+      }
+
+      const agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || [];
+      const ocupados = agendamentos.filter(a => a.data === dataSelecionada).map(a => a.hora);
+
+      return horarios.filter(hora => !ocupados.includes(hora));
+    }
+
+    function atualizarHorarios() {
+      const data = document.getElementById('data').value;
+      const selectHora = document.getElementById('hora');
+      selectHora.innerHTML = '';
+
+      if (!data) return;
+
+      const disponiveis = gerarHorariosDisponiveis(data);
+      if (disponiveis.length === 0) {
+        const option = document.createElement('option');
+        option.textContent = 'Sem horários disponíveis';
+        option.disabled = true;
+        selectHora.appendChild(option);
+      } else {
+        disponiveis.forEach(hora => {
+          const option = document.createElement('option');
+          option.value = hora;
+          option.textContent = hora;
+          selectHora.appendChild(option);
+        });
+      }
+    }
+
+    function agendar() {
+      const nome = document.getElementById('nome').value;
+      const servico = document.getElementById('servico').value;
+      const data = document.getElementById('data').value;
+      const hora = document.getElementById('hora').value;
+      const msg = document.getElementById('mensagem');
+
+      if (nome && data && hora) {
+        const agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || [];
+        agendamentos.push({ nome, servico, data, hora });
+        localStorage.setItem('agendamentos', JSON.stringify(agendamentos));
+
+        msg.style.display = 'block';
+        msg.innerHTML = `Agendamento confirmado!<br><strong>${nome}</strong>, você escolheu <strong>${servico}</strong> (R$ ${precos[servico].toFixed(2).replace('.', ',')})<br>para o dia <strong>${data}</strong> às <strong>${hora}</strong>.`;
+
+        atualizarHorarios();
+      } else {
+        msg.style.display = 'block';
+        msg.innerHTML = 'Por favor, preencha todos os campos corretamente.';
+      }
+    }
+
+    function enviarWhatsApp() {
+      const nome = document.getElementById('nome').value;
+      const servico = document.getElementById('servico').value;
+      const data = document.getElementById('data').value;
+      const hora = document.getElementById('hora').value;
+
+      if (nome && data && hora) {
+        const numeroBarbearia = '5591999999999';
+        const preco = precos[servico].toFixed(2).replace('.', ',');
+        const texto = `👋 Olá, meu nome é ${nome}!\n\nGostaria de agendar o seguinte serviço:\n💇‍♀️ Serviço: ${servico}\n📅 Data: ${data}\n⏰ Horário: ${hora}\n💰 Valor: R$ ${preco}\n\nAguardo a confirmação. Obrigada! 💖`;
+
+        const url = `https://wa.me/${numeroBarbearia}?text=${encodeURIComponent(texto)}`;
+        window.open(url, '_blank');
+      } else {
+        alert('Por favor, preencha todos os campos antes de enviar.');
+      }
+    }
+
+    function mostrarAgendamentos() {
+      const painel = document.getElementById("painelAdmin");
+      const tabela = document.getElementById("tabelaAgendamentos").getElementsByTagName('tbody')[0];
+      tabela.innerHTML = "";
+      const agendamentos = JSON.parse(localStorage.getItem("agendamentos")) || [];
+
+      agendamentos.forEach(ag => {
+        const row = tabela.insertRow();
+        row.innerHTML = `<td>${ag.nome}</td><td>${ag.servico}</td><td>${ag.data}</td><td>${ag.hora}</td>`;
+      });
+
+      painel.style.display = 'block';
+    }
+
+    function verificarSenha() {
+      const senha = document.getElementById('senhaAdmin').value;
+      if (senha === senhaCorreta) {
+        document.querySelector('.admin-button').style.display = 'inline-block';
+        alert('Acesso autorizado!');
+      } else {
+        alert('Senha incorreta! Tente novamente.');
+      }
+    }
+
+    window.onload = () => {
+      const hoje = new Date().toISOString().split("T")[0];
+      document.getElementById("data").setAttribute("min", hoje);
+      mostrarValor();
+    }
+  </script>
+</body>
+</html>

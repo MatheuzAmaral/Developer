@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const URI = '';
+const URI = 'mongodb+srv://pro1canaldomt:<db_password>@clusterdev.lul0oy5.mongodb.net/?retryWrites=true&w=majority&appName=ClusterDev';
 
 const env = process.env.NODE_ENV || 'dev';
 let options = {};
