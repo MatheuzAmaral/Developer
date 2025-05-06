@@ -2,131 +2,179 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Agendamento - Salão Feminino</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: url('https://www.transparenttextures.com/patterns/flowers.png') repeat, #fdf1f5;
-      color: #4a2c2a;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      background-size: auto;
+    * {
+      box-sizing: border-box;
     }
 
-    h1 {
-      color: #c84b8e;
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #fce4ec, #f8bbd0);
+      color: #333;
+      padding-top: 80px;
+    }
+
+    .topbar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
+    }
+
+    .creator-bar {
+      background-color: #c2185b;
+      text-align: center;
+      color: white;
+      padding: 4px 0;
+      font-size: 14px;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: #e91e63;
+      color: white;
+    }
+
+    .navbar h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .menu-btn {
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -250px;
+      width: 250px;
+      height: 100%;
+      background-color: #f8bbd0;
+      padding: 60px 20px 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+      transition: 0.3s;
+      z-index: 999;
+    }
+
+    .sidebar.active {
+      left: 0;
+    }
+
+    .sidebar input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .sidebar button {
+      width: 100%;
+      padding: 10px;
+      background-color: #e91e63;
+      border: none;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 5px;
     }
 
     .container {
-      background-color: #ffffffdd;
-      padding: 20px;
-      border-radius: 12px;
-      width: 100%;
       max-width: 400px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin: auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     label {
       display: block;
       margin-top: 10px;
-      color: #555;
-      font-weight: 500;
     }
 
     input, select, button {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 1em;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
 
-    button {
-      background-color: #c84b8e;
+    button.confirmar {
+      background-color: #e91e63;
       color: white;
-      cursor: pointer;
+      border: none;
       margin-top: 15px;
-      transition: background-color 0.3s;
+      cursor: pointer;
     }
 
-    button:hover {
-      background-color: #a83c74;
+    button.confirmar:hover {
+      background-color: #c2185b;
     }
 
     .mensagem {
       margin-top: 15px;
-      background: #ffe0f0;
-      color: #6b2c3a;
+      background: #fff0f5;
       padding: 10px;
-      border-radius: 6px;
+      border-radius: 5px;
       display: none;
-    }
-
-    .valor {
-      margin-top: 5px;
-      font-weight: bold;
-      color: #d66;
-    }
-
-    .admin-password {
-      margin-top: 30px;
-      background-color: #fff3f8;
-      padding: 15px;
-      border-radius: 10px;
-      max-width: 400px;
-      width: 100%;
     }
 
     .admin-panel {
-      margin-top: 30px;
-      background: #fff3f8;
-      padding: 15px;
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: white;
+      padding: 20px;
       border-radius: 10px;
-      max-width: 500px;
-      width: 100%;
       display: none;
-    }
-
-    .admin-panel h2 {
-      color: #b03e72;
-      margin-bottom: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
     }
 
     th, td {
-      border: 1px solid #bbb;
-      padding: 8px;
+      padding: 10px;
+      border: 1px solid #ccc;
       text-align: left;
-      color: #444;
     }
 
-    th {
-      background-color: #fcd5e5;
-    }
-
-    @media (max-width: 480px) {
-      .container, .admin-password, .admin-panel {
-        padding: 15px;
-        border-radius: 8px;
+    @media (max-width: 600px) {
+      .container, .admin-panel {
+        margin: 20px;
       }
     }
   </style>
 </head>
 <body>
-  <h1>Agende seu horário</h1>
+  <div class="topbar">
+    <div class="creator-bar">Criado por: MatheuzSilperTec</div>
+    <div class="navbar">
+      <h1>Agendamento</h1>
+      <i class="fas fa-bars menu-btn" onclick="toggleSidebar()"></i>
+    </div>
+  </div>
+
+  <div class="sidebar" id="sidebar">
+    <input type="password" id="senhaAdmin" placeholder="Senha do Admin">
+    <button onclick="verificarSenha()">Entrar</button>
+  </div>
+
   <div class="container">
     <label for="nome">Nome:</label>
-    <input type="text" id="nome" required />
+    <input type="text" id="nome" required>
 
     <label for="servico">Serviço:</label>
     <select id="servico" onchange="mostrarValor()">
@@ -142,28 +190,22 @@
       <option value="Spa dos pés">Spa dos pés</option>
     </select>
 
-    <div class="valor" id="valorServico"></div>
+    <div id="valorServico" style="margin-top: 10px; font-weight: bold;"></div>
 
     <label for="data">Data:</label>
-    <input type="date" id="data" required onchange="atualizarHorarios()" />
+    <input type="date" id="data" onchange="atualizarHorarios()">
 
     <label for="hora">Horário:</label>
-    <select id="hora" required></select>
+    <select id="hora"></select>
 
-    <button onclick="confirmarAgendamento()">Confirmar e Enviar via WhatsApp</button>
+    <button class="confirmar" onclick="agendarEEnviar()">Confirmar e Enviar no WhatsApp</button>
 
     <div class="mensagem" id="mensagem"></div>
   </div>
 
-  <div class="admin-password">
-    <label for="senhaAdmin">Senha Administrador:</label>
-    <input type="password" id="senhaAdmin" placeholder="Digite a senha" />
-    <button onclick="verificarSenha()">Entrar como Administrador</button>
-  </div>
-
   <div class="admin-panel" id="painelAdmin">
-    <h2>Agendamentos Salvos</h2>
-    <table id="tabelaAgendamentos">
+    <h2>Agendamentos</h2>
+    <table>
       <thead>
         <tr>
           <th>Nome</th>
@@ -172,14 +214,26 @@
           <th>Hora</th>
         </tr>
       </thead>
-      <tbody></tbody>
+      <tbody id="tabelaAgendamentos"></tbody>
     </table>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js"></script>
   <script>
-    const horarioInicio = 9;
-    const horarioFim = 18;
-    const senhaCorreta = "1234";
+    const firebaseConfig = {
+      apiKey: "AIzaSyBdnwdXqkpxJ6Rq5kviUC8Dgt6BaPsBsLQ",
+      authDomain: "agendamento---salao-feminino.firebaseapp.com",
+      databaseURL: "https://agendamento---salao-feminino-default-rtdb.firebaseio.com",
+      projectId: "agendamento---salao-feminino",
+      storageBucket: "agendamento---salao-feminino.appspot.com",
+      messagingSenderId: "187999443888",
+      appId: "1:187999443888:web:cb7db27ae843267bfb5475",
+      measurementId: "G-333PWHXDMB"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
     const precos = {
       "Escova simples": 40,
@@ -194,103 +248,104 @@
       "Spa dos pés": 80
     };
 
-    function mostrarValor() {
-      const servico = document.getElementById('servico').value;
-      document.getElementById('valorServico').textContent = `Valor: R$ ${precos[servico].toFixed(2).replace('.', ',')}`;
+    const senhaCorreta = "1234";
+
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("active");
     }
 
-    function gerarHorariosDisponiveis(dataSelecionada) {
-      const horarios = [];
-      for (let h = horarioInicio; h < horarioFim; h++) {
-        const horaStr = `${String(h).padStart(2, '0')}:00`;
-        horarios.push(horaStr);
-      }
-
-      const agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || [];
-      const ocupados = agendamentos.filter(a => a.data === dataSelecionada).map(a => a.hora);
-
-      return horarios.filter(hora => !ocupados.includes(hora));
+    function mostrarValor() {
+      const servico = document.getElementById("servico").value;
+      document.getElementById("valorServico").textContent = `Valor: R$ ${precos[servico].toFixed(2).replace(".", ",")}`;
     }
 
     function atualizarHorarios() {
-      const data = document.getElementById('data').value;
-      const selectHora = document.getElementById('hora');
-      selectHora.innerHTML = '';
+      const data = document.getElementById("data").value;
+      const horaSelect = document.getElementById("hora");
+      horaSelect.innerHTML = "";
 
-      if (!data) return;
-
-      const disponiveis = gerarHorariosDisponiveis(data);
-      if (disponiveis.length === 0) {
-        const option = document.createElement('option');
-        option.textContent = 'Sem horários disponíveis';
-        option.disabled = true;
-        selectHora.appendChild(option);
-      } else {
-        disponiveis.forEach(hora => {
-          const option = document.createElement('option');
-          option.value = hora;
-          option.textContent = hora;
-          selectHora.appendChild(option);
+      const ref = db.ref("agendamentos");
+      ref.once("value", snapshot => {
+        const agendados = [];
+        snapshot.forEach(child => {
+          if (child.val().data === data) {
+            agendados.push(child.val().hora);
+          }
         });
-      }
+
+        for (let h = 9; h < 18; h++) {
+          const horaStr = `${String(h).padStart(2, '0')}:00`;
+          if (!agendados.includes(horaStr)) {
+            const opt = document.createElement("option");
+            opt.value = horaStr;
+            opt.textContent = horaStr;
+            horaSelect.appendChild(opt);
+          }
+        }
+
+        if (!horaSelect.firstChild) {
+          const opt = document.createElement("option");
+          opt.textContent = "Sem horários disponíveis";
+          opt.disabled = true;
+          horaSelect.appendChild(opt);
+        }
+      });
     }
 
-    function confirmarAgendamento() {
-      const nome = document.getElementById('nome').value;
-      const servico = document.getElementById('servico').value;
-      const data = document.getElementById('data').value;
-      const hora = document.getElementById('hora').value;
-      const msg = document.getElementById('mensagem');
+    function agendarEEnviar() {
+      const nome = document.getElementById("nome").value;
+      const servico = document.getElementById("servico").value;
+      const data = document.getElementById("data").value;
+      const hora = document.getElementById("hora").value;
 
-      if (nome && data && hora) {
-        const agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || [];
-        agendamentos.push({ nome, servico, data, hora });
-        localStorage.setItem('agendamentos', JSON.stringify(agendamentos));
-        atualizarHorarios();
+      if (nome && servico && data && hora) {
+        const ref = db.ref("agendamentos");
+        ref.push({ nome, servico, data, hora });
 
         const preco = precos[servico].toFixed(2).replace('.', ',');
-        const texto = `👋 Olá, meu nome é ${nome}!\n\nGostaria de agendar:\n💇‍♀️ ${servico}\n📅 ${data}\n⏰ ${hora}\n💰 R$ ${preco}\n\nAguardo a confirmação. Obrigada! 💖`;
-        const numeroBarbearia = '5591999999999';
-        const url = `https://wa.me/${numeroBarbearia}?text=${encodeURIComponent(texto)}`;
+        const mensagem = `👋 Olá, meu nome é ${nome}!\n\nGostaria de agendar:\n💇‍♀️ ${servico}\n📅 ${data}\n⏰ ${hora}\n💰 R$ ${preco}`;
+        const numero = "5591999999999";
+        const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
         window.open(url, '_blank');
 
-        msg.style.display = 'block';
-        msg.innerHTML = `Agendamento enviado para o WhatsApp!<br><strong>${nome}</strong> escolheu <strong>${servico}</strong> (R$ ${preco})<br>para o dia <strong>${data}</strong> às <strong>${hora}</strong>.`;
-      } else {
-        msg.style.display = 'block';
-        msg.innerHTML = 'Por favor, preencha todos os campos corretamente.';
+        document.getElementById("mensagem").textContent = "Agendamento confirmado!";
+        document.getElementById("mensagem").style.display = "block";
+
+        atualizarHorarios();
       }
     }
 
     function verificarSenha() {
-      const senha = document.getElementById('senhaAdmin').value;
+      const senha = document.getElementById("senhaAdmin").value;
       if (senha === senhaCorreta) {
         mostrarAgendamentos();
-        alert('Acesso autorizado!');
+        toggleSidebar();
       } else {
-        alert('Senha incorreta!');
+        alert("Senha incorreta!");
       }
     }
 
     function mostrarAgendamentos() {
       const painel = document.getElementById("painelAdmin");
-      const tabela = document.getElementById("tabelaAgendamentos").getElementsByTagName('tbody')[0];
+      const tabela = document.getElementById("tabelaAgendamentos");
       tabela.innerHTML = "";
-      const agendamentos = JSON.parse(localStorage.getItem("agendamentos")) || [];
 
-      agendamentos.forEach(ag => {
-        const row = tabela.insertRow();
-        row.innerHTML = `<td>${ag.nome}</td><td>${ag.servico}</td><td>${ag.data}</td><td>${ag.hora}</td>`;
+      const ref = db.ref("agendamentos");
+      ref.once("value", snapshot => {
+        snapshot.forEach(child => {
+          const ag = child.val();
+          const row = tabela.insertRow();
+          row.innerHTML = `<td>${ag.nome}</td><td>${ag.servico}</td><td>${ag.data}</td><td>${ag.hora}</td>`;
+        });
+        painel.style.display = "block";
       });
-
-      painel.style.display = 'block';
     }
 
     window.onload = () => {
       const hoje = new Date().toISOString().split("T")[0];
       document.getElementById("data").setAttribute("min", hoje);
       mostrarValor();
-    }
+    };
   </script>
 </body>
 </html>
