@@ -2,94 +2,99 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Agendamento - Salão Feminino</title>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #820ad1;
-      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: url('https://www.transparenttextures.com/patterns/flowers.png') repeat, #fdf1f5;
+      color: #4a2c2a;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 20px;
+      background-size: auto;
     }
 
     h1 {
-      color: #ffffff;
+      color: #c84b8e;
     }
 
     .container {
-      background-color: #1f1f1f;
+      background-color: #ffffffdd;
       padding: 20px;
-      border-radius: 10px;
+      border-radius: 12px;
       width: 100%;
       max-width: 400px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
     label {
       display: block;
       margin-top: 10px;
-      color: #ccc;
+      color: #555;
+      font-weight: 500;
     }
 
     input, select, button {
       width: 100%;
       padding: 10px;
       margin-top: 5px;
-      border: none;
-      border-radius: 5px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
       font-size: 1em;
     }
 
     button {
-      background-color: #820ad1;
+      background-color: #c84b8e;
       color: white;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 15px;
+      transition: background-color 0.3s;
     }
 
     button:hover {
-      background-color: #5e0a9f;
-    }
-
-    .whatsapp {
-      background-color: #25d366;
+      background-color: #a83c74;
     }
 
     .mensagem {
       margin-top: 15px;
-      background: #2b2b2b;
+      background: #ffe0f0;
+      color: #6b2c3a;
       padding: 10px;
-      border-radius: 5px;
+      border-radius: 6px;
       display: none;
     }
 
     .valor {
       margin-top: 5px;
       font-weight: bold;
-      color: #ffd700;
+      color: #d66;
+    }
+
+    .admin-password {
+      margin-top: 30px;
+      background-color: #fff3f8;
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 100%;
     }
 
     .admin-panel {
       margin-top: 30px;
-      background: #2b2b2b;
+      background: #fff3f8;
       padding: 15px;
       border-radius: 10px;
-      width: 100%;
       max-width: 500px;
+      width: 100%;
       display: none;
     }
 
     .admin-panel h2 {
+      color: #b03e72;
       margin-bottom: 10px;
-    }
-
-    .admin-button {
-      margin-top: 20px;
-      background-color: #444;
-      width: auto;
     }
 
     table {
@@ -99,22 +104,21 @@
     }
 
     th, td {
-      border: 1px solid #555;
+      border: 1px solid #bbb;
       padding: 8px;
       text-align: left;
-      color: #ddd;
+      color: #444;
     }
 
     th {
-      background-color: #3a3a3a;
+      background-color: #fcd5e5;
     }
 
-    .admin-password {
-      margin-top: 20px;
-      background-color: #444;
-      padding: 10px;
-      border-radius: 5px;
-      width: auto;
+    @media (max-width: 480px) {
+      .container, .admin-password, .admin-panel {
+        padding: 15px;
+        border-radius: 8px;
+      }
     }
   </style>
 </head>
@@ -146,8 +150,7 @@
     <label for="hora">Horário:</label>
     <select id="hora" required></select>
 
-    <button onclick="agendar()">Confirmar</button>
-    <button class="whatsapp" onclick="enviarWhatsApp()">Enviar via WhatsApp</button>
+    <button onclick="confirmarAgendamento()">Confirmar e Enviar via WhatsApp</button>
 
     <div class="mensagem" id="mensagem"></div>
   </div>
@@ -158,7 +161,6 @@
     <button onclick="verificarSenha()">Entrar como Administrador</button>
   </div>
 
-  <button class="admin-button" onclick="mostrarAgendamentos()" style="display:none;">📋 Ver agendamentos</button>
   <div class="admin-panel" id="painelAdmin">
     <h2>Agendamentos Salvos</h2>
     <table id="tabelaAgendamentos">
@@ -177,6 +179,7 @@
   <script>
     const horarioInicio = 9;
     const horarioFim = 18;
+    const senhaCorreta = "1234";
 
     const precos = {
       "Escova simples": 40,
@@ -191,12 +194,9 @@
       "Spa dos pés": 80
     };
 
-    const senhaCorreta = "1234"; // Senha de acesso para o painel admin
-
     function mostrarValor() {
       const servico = document.getElementById('servico').value;
-      const valorDiv = document.getElementById('valorServico');
-      valorDiv.textContent = `Valor: R$ ${precos[servico].toFixed(2).replace('.', ',')}`;
+      document.getElementById('valorServico').textContent = `Valor: R$ ${precos[servico].toFixed(2).replace('.', ',')}`;
     }
 
     function gerarHorariosDisponiveis(dataSelecionada) {
@@ -235,7 +235,7 @@
       }
     }
 
-    function agendar() {
+    function confirmarAgendamento() {
       const nome = document.getElementById('nome').value;
       const servico = document.getElementById('servico').value;
       const data = document.getElementById('data').value;
@@ -246,32 +246,29 @@
         const agendamentos = JSON.parse(localStorage.getItem('agendamentos')) || [];
         agendamentos.push({ nome, servico, data, hora });
         localStorage.setItem('agendamentos', JSON.stringify(agendamentos));
+        atualizarHorarios();
+
+        const preco = precos[servico].toFixed(2).replace('.', ',');
+        const texto = `👋 Olá, meu nome é ${nome}!\n\nGostaria de agendar:\n💇‍♀️ ${servico}\n📅 ${data}\n⏰ ${hora}\n💰 R$ ${preco}\n\nAguardo a confirmação. Obrigada! 💖`;
+        const numeroBarbearia = '5591999999999';
+        const url = `https://wa.me/${numeroBarbearia}?text=${encodeURIComponent(texto)}`;
+        window.open(url, '_blank');
 
         msg.style.display = 'block';
-        msg.innerHTML = `Agendamento confirmado!<br><strong>${nome}</strong>, você escolheu <strong>${servico}</strong> (R$ ${precos[servico].toFixed(2).replace('.', ',')})<br>para o dia <strong>${data}</strong> às <strong>${hora}</strong>.`;
-
-        atualizarHorarios();
+        msg.innerHTML = `Agendamento enviado para o WhatsApp!<br><strong>${nome}</strong> escolheu <strong>${servico}</strong> (R$ ${preco})<br>para o dia <strong>${data}</strong> às <strong>${hora}</strong>.`;
       } else {
         msg.style.display = 'block';
         msg.innerHTML = 'Por favor, preencha todos os campos corretamente.';
       }
     }
 
-    function enviarWhatsApp() {
-      const nome = document.getElementById('nome').value;
-      const servico = document.getElementById('servico').value;
-      const data = document.getElementById('data').value;
-      const hora = document.getElementById('hora').value;
-
-      if (nome && data && hora) {
-        const numeroBarbearia = '5591999999999';
-        const preco = precos[servico].toFixed(2).replace('.', ',');
-        const texto = `👋 Olá, meu nome é ${nome}!\n\nGostaria de agendar o seguinte serviço:\n💇‍♀️ Serviço: ${servico}\n📅 Data: ${data}\n⏰ Horário: ${hora}\n💰 Valor: R$ ${preco}\n\nAguardo a confirmação. Obrigada! 💖`;
-
-        const url = `https://wa.me/${numeroBarbearia}?text=${encodeURIComponent(texto)}`;
-        window.open(url, '_blank');
+    function verificarSenha() {
+      const senha = document.getElementById('senhaAdmin').value;
+      if (senha === senhaCorreta) {
+        mostrarAgendamentos();
+        alert('Acesso autorizado!');
       } else {
-        alert('Por favor, preencha todos os campos antes de enviar.');
+        alert('Senha incorreta!');
       }
     }
 
@@ -287,16 +284,6 @@
       });
 
       painel.style.display = 'block';
-    }
-
-    function verificarSenha() {
-      const senha = document.getElementById('senhaAdmin').value;
-      if (senha === senhaCorreta) {
-        document.querySelector('.admin-button').style.display = 'inline-block';
-        alert('Acesso autorizado!');
-      } else {
-        alert('Senha incorreta! Tente novamente.');
-      }
     }
 
     window.onload = () => {
