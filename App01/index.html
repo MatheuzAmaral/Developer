@@ -3,349 +3,615 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Agendamento - Salão Feminino</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+  <title>Agendamentos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, push, onValue, remove, get, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #fce4ec, #f8bbd0);
-      color: #333;
-      padding-top: 80px;
-    }
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkODECMkvI1pNKOJFKweOfvH1k0Jmhi-c",
+      authDomain: "salao-de-cabelo-cf021.firebaseapp.com",
+      projectId: "salao-de-cabelo-cf021",
+      storageBucket: "salao-de-cabelo-cf021.appspot.com",
+      messagingSenderId: "919708553667",
+      appId: "1:919708553667:web:aede31823a3eb1ed65ad76",
+      measurementId: "G-RQ4NH9NR3Q",
+      databaseURL: "https://salao-de-cabelo-cf021-default-rtdb.firebaseio.com"
+    };
 
-    .topbar {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      z-index: 1000;
-    }
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
 
-    .creator-bar {
-      background-color: #c2185b;
-      text-align: center;
-      color: white;
-      padding: 4px 0;
-      font-size: 14px;
-    }
+    // Função para atualizar horários disponíveis
+    async function atualizarHorariosDisponiveis() {
+      const dataSelecionada = document.getElementById("data").value;
+      const selectHora = document.getElementById("hora");
+      
+      if (!dataSelecionada) {
+        selectHora.innerHTML = '<option value="">Selecione uma data primeiro</option>';
+        return;
+      }
 
-    .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 20px;
-      background-color: #e91e63;
-      color: white;
-    }
+      try {
+        // Verificar dias indisponíveis
+        const diaIndisponivelRef = ref(database, 'dias_indisponiveis/' + dataSelecionada);
+        const diaSnapshot = await get(diaIndisponivelRef);
+        
+        if (diaSnapshot.exists()) {
+          selectHora.innerHTML = '<option value="">DIA INDISPONÍVEL</option>';
+          selectHora.disabled = true;
+          return;
+        } else {
+          selectHora.disabled = false;
+        }
 
-    .navbar h1 {
-      font-size: 20px;
-      margin: 0;
-    }
+        // Verificar horários agendados
+        const agendRef = ref(database, 'agendamentos/' + dataSelecionada);
+        const snapshot = await get(agendRef);
+        
+        // Todos os horários possíveis
+        const todosHorarios = [
+          "08:00", "09:00", "10:00", "11:00", 
+          "12:00", "13:00", "14:00", "15:00", 
+          "16:00", "17:00"
+        ];
+        
+        // Iniciar com todos os horários disponíveis
+        let horariosDisponiveis = [...todosHorarios];
 
-    .menu-btn {
-      font-size: 22px;
-      cursor: pointer;
-    }
+        // Remover horários já agendados
+        if (snapshot.exists()) {
+          snapshot.forEach(childSnapshot => {
+            const horaAgendada = childSnapshot.val().hora;
+            horariosDisponiveis = horariosDisponiveis.filter(h => h !== horaAgendada);
+          });
+        }
 
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: -250px;
-      width: 250px;
-      height: 100%;
-      background-color: #f8bbd0;
-      padding: 60px 20px 20px;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.3);
-      transition: 0.3s;
-      z-index: 999;
-    }
-
-    .sidebar.active {
-      left: 0;
-    }
-
-    .sidebar input[type="password"] {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      border: none;
-      border-radius: 5px;
-    }
-
-    .sidebar button {
-      width: 100%;
-      padding: 10px;
-      background-color: #e91e63;
-      border: none;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-
-    .container {
-      max-width: 400px;
-      margin: auto;
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    button.confirmar {
-      background-color: #e91e63;
-      color: white;
-      border: none;
-      margin-top: 15px;
-      cursor: pointer;
-    }
-
-    button.confirmar:hover {
-      background-color: #c2185b;
-    }
-
-    .mensagem {
-      margin-top: 15px;
-      background: #fff0f5;
-      padding: 10px;
-      border-radius: 5px;
-      display: none;
-    }
-
-    .admin-panel {
-      max-width: 600px;
-      margin: 40px auto;
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      display: none;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
-      text-align: left;
-    }
-
-    @media (max-width: 600px) {
-      .container, .admin-panel {
-        margin: 20px;
+        // Atualizar o select
+        if (horariosDisponiveis.length > 0) {
+          selectHora.innerHTML = horariosDisponiveis.map(hora => 
+            `<option value="${hora}">${hora}</option>`
+          ).join('');
+        } else {
+          selectHora.innerHTML = '<option value="">NENHUM HORÁRIO DISPONÍVEL</option>';
+        }
+      } catch (error) {
+        console.error("Erro ao carregar horários:", error);
+        selectHora.innerHTML = '<option value="">Erro ao carregar horários</option>';
       }
     }
-  </style>
-</head>
-<body>
-  <div class="topbar">
-    <div class="creator-bar">Criado por: MatheuzSilperTec</div>
-    <div class="navbar">
-      <h1>Agendamento</h1>
-      <i class="fas fa-bars menu-btn" onclick="toggleSidebar()"></i>
-    </div>
-  </div>
 
-  <div class="sidebar" id="sidebar">
-    <input type="password" id="senhaAdmin" placeholder="Senha do Admin">
-    <button onclick="verificarSenha()">Entrar</button>
-  </div>
-
-  <div class="container">
-    <label for="nome">Nome:</label>
-    <input type="text" id="nome" required>
-
-    <label for="servico">Serviço:</label>
-    <select id="servico" onchange="mostrarValor()">
-      <option value="Escova simples">Escova simples</option>
-      <option value="Hidratação capilar">Hidratação capilar</option>
-      <option value="Corte feminino">Corte feminino</option>
-      <option value="Progressiva">Progressiva</option>
-      <option value="Luzes">Luzes</option>
-      <option value="Coloração">Coloração</option>
-      <option value="Sobrancelha">Sobrancelha</option>
-      <option value="Maquiagem">Maquiagem</option>
-      <option value="Manicure e pedicure">Manicure e pedicure</option>
-      <option value="Spa dos pés">Spa dos pés</option>
-    </select>
-
-    <div id="valorServico" style="margin-top: 10px; font-weight: bold;"></div>
-
-    <label for="data">Data:</label>
-    <input type="date" id="data" onchange="atualizarHorarios()">
-
-    <label for="hora">Horário:</label>
-    <select id="hora"></select>
-
-    <button class="confirmar" onclick="agendarEEnviar()">Confirmar e Enviar no WhatsApp</button>
-
-    <div class="mensagem" id="mensagem"></div>
-  </div>
-
-  <div class="admin-panel" id="painelAdmin">
-    <h2>Agendamentos</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Serviço</th>
-          <th>Data</th>
-          <th>Hora</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaAgendamentos"></tbody>
-    </table>
-  </div>
-
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBdnwdXqkpxJ6Rq5kviUC8Dgt6BaPsBsLQ",
-      authDomain: "agendamento---salao-feminino.firebaseapp.com",
-      databaseURL: "https://agendamento---salao-feminino-default-rtdb.firebaseio.com",
-      projectId: "agendamento---salao-feminino",
-      storageBucket: "agendamento---salao-feminino.appspot.com",
-      messagingSenderId: "187999443888",
-      appId: "1:187999443888:web:cb7db27ae843267bfb5475",
-      measurementId: "G-333PWHXDMB"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const precos = {
-      "Escova simples": 40,
-      "Hidratação capilar": 70,
-      "Corte feminino": 50,
-      "Progressiva": 200,
-      "Luzes": 250,
-      "Coloração": 120,
-      "Sobrancelha": 25,
-      "Maquiagem": 100,
-      "Manicure e pedicure": 60,
-      "Spa dos pés": 80
-    };
-
-    const senhaCorreta = "1234";
-
-    function toggleSidebar() {
-      document.getElementById("sidebar").classList.toggle("active");
-    }
-
-    function mostrarValor() {
-      const servico = document.getElementById("servico").value;
-      document.getElementById("valorServico").textContent = `Valor: R$ ${precos[servico].toFixed(2).replace(".", ",")}`;
-    }
-
-    function atualizarHorarios() {
-      const data = document.getElementById("data").value;
-      const horaSelect = document.getElementById("hora");
-      horaSelect.innerHTML = "";
-
-      const ref = db.ref("agendamentos");
-      ref.once("value", snapshot => {
-        const agendados = [];
-        snapshot.forEach(child => {
-          if (child.val().data === data) {
-            agendados.push(child.val().hora);
-          }
-        });
-
-        for (let h = 9; h < 18; h++) {
-          const horaStr = `${String(h).padStart(2, '0')}:00`;
-          if (!agendados.includes(horaStr)) {
-            const opt = document.createElement("option");
-            opt.value = horaStr;
-            opt.textContent = horaStr;
-            horaSelect.appendChild(opt);
-          }
-        }
-
-        if (!horaSelect.firstChild) {
-          const opt = document.createElement("option");
-          opt.textContent = "Sem horários disponíveis";
-          opt.disabled = true;
-          horaSelect.appendChild(opt);
-        }
-      });
-    }
-
-    function agendarEEnviar() {
+    window.confirmarAgendamento = async function () {
       const nome = document.getElementById("nome").value;
       const servico = document.getElementById("servico").value;
       const data = document.getElementById("data").value;
       const hora = document.getElementById("hora").value;
 
-      if (nome && servico && data && hora) {
-        const ref = db.ref("agendamentos");
-        ref.push({ nome, servico, data, hora });
+      if (!nome || !servico || !data || !hora) {
+        alert("Por favor, preencha todos os campos!");
+        return;
+      }
 
-        const preco = precos[servico].toFixed(2).replace('.', ',');
-        const mensagem = `👋 Olá, meu nome é ${nome}!\n\nGostaria de agendar:\n💇‍♀️ ${servico}\n📅 ${data}\n⏰ ${hora}\n💰 R$ ${preco}`;
-        const numero = "5591999999999";
-        const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
-        window.open(url, '_blank');
+      try {
+        // Verificar se o dia está indisponível
+        const diaIndisponivelRef = ref(database, 'dias_indisponiveis/' + data);
+        const diaSnapshot = await get(diaIndisponivelRef);
+        
+        if (diaSnapshot.exists()) {
+          alert("Este dia está indisponível para agendamentos!");
+          return;
+        }
 
-        document.getElementById("mensagem").textContent = "Agendamento confirmado!";
-        document.getElementById("mensagem").style.display = "block";
+        // Verificar se o horário já está ocupado (verificação redundante por segurança)
+        const agendRef = ref(database, 'agendamentos/' + data + '/' + hora);
+        const snapshot = await get(agendRef);
+        
+        if (snapshot.exists()) {
+          alert("Este horário já foi agendado! Por favor, escolha outro horário.");
+          atualizarHorariosDisponiveis(); // Atualizar a lista de horários
+        } else {
+          // Agendar o novo horário
+          const agendamento = { nome, servico, hora };
+          await set(agendRef, agendamento);
+          
+          alert("Agendamento confirmado com sucesso!");
+          enviarMensagemWhatsapp(nome, servico, data, hora);
+          
+          // Limpar os campos após o agendamento
+          document.getElementById("nome").value = "";
+          document.getElementById("servico").value = "Escova simples - R$40";
+          document.getElementById("data").value = "";
+          document.getElementById("hora").innerHTML = `
+            <option value="08:00">08:00</option>
+            <option value="09:00">09:00</option>
+            <option value="10:00">10:00</option>
+            <option value="11:00">11:00</option>
+            <option value="12:00">12:00</option>
+            <option value="13:00">13:00</option>
+            <option value="14:00">14:00</option>
+            <option value="15:00">15:00</option>
+            <option value="16:00">16:00</option>
+            <option value="17:00">17:00</option>
+          `;
+        }
+      } catch (error) {
+        alert("Erro ao processar agendamento: " + error.message);
+      }
+    };
 
-        atualizarHorarios();
+    function enviarMensagemWhatsapp(nome, servico, data, hora) {
+      const telefoneDona = "5521974260378";
+      const mensagem = `✅ *Novo agendamento confirmado!* ✅\n\n👤 *Nome:* ${nome}\n✂️ *Serviço:* ${servico}\n📅 *Data:* ${data}\n⏰ *Hora:* ${hora}\n\nPor favor, confirme o recebimento.`;
+      const url = `https://wa.me/${telefoneDona}?text=${encodeURIComponent(mensagem)}`;
+      window.open(url, '_blank');
+    }
+
+    window.mostrarAgendamentos = function () {
+      const dataSelecionada = document.getElementById('calendario').value;
+      const tabela = document.getElementById('tabelaAgendamentos').getElementsByTagName('tbody')[0];
+      tabela.innerHTML = '';
+
+      const agendRef = ref(database, 'agendamentos/' + dataSelecionada);
+      onValue(agendRef, (snapshot) => {
+        tabela.innerHTML = '';
+        snapshot.forEach(childSnapshot => {
+          const dados = childSnapshot.val();
+          const key = childSnapshot.key;
+          const row = tabela.insertRow();
+          row.innerHTML = `<td>${dados.nome}</td><td>${dados.servico}</td><td>${dados.hora}</td><td><button onclick="removerAgendamento('${dataSelecionada}', '${key}')">Remover</button></td>`;
+        });
+      });
+
+      // Verificar e mostrar se o dia está marcado como indisponível
+      const diaIndisponivelRef = ref(database, 'dias_indisponiveis/' + dataSelecionada);
+      get(diaIndisponivelRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const row = tabela.insertRow();
+          row.innerHTML = `<td colspan="4" style="color: red; text-align: center; font-weight: bold;">ESTE DIA ESTÁ MARCADO COMO INDISPONÍVEL</td>`;
+        }
+      });
+    };
+
+    window.removerAgendamento = function (data, key) {
+      remove(ref(database, 'agendamentos/' + data + '/' + key))
+        .then(() => mostrarAgendamentos())
+        .catch((error) => alert("Erro ao remover: " + error));
+    };
+
+    window.marcarDiaIndisponivel = function() {
+      const dataSelecionada = document.getElementById('calendario').value;
+      if (!dataSelecionada) {
+        alert("Por favor, selecione uma data primeiro!");
+        return;
+      }
+      
+      if (confirm(`Tem certeza que deseja marcar o dia ${dataSelecionada} como indisponível?`)) {
+        const diaIndisponivelRef = ref(database, 'dias_indisponiveis/' + dataSelecionada);
+        set(diaIndisponivelRef, true)
+          .then(() => {
+            alert(`Dia ${dataSelecionada} marcado como indisponível com sucesso!`);
+            mostrarAgendamentos();
+          })
+          .catch(error => alert("Erro ao marcar dia como indisponível: " + error));
+      }
+    };
+
+    window.desmarcarDiaIndisponivel = function() {
+      const dataSelecionada = document.getElementById('calendario').value;
+      if (!dataSelecionada) {
+        alert("Por favor, selecione uma data primeiro!");
+        return;
+      }
+      
+      if (confirm(`Tem certeza que deseja desmarcar o dia ${dataSelecionada} como indisponível?`)) {
+        const diaIndisponivelRef = ref(database, 'dias_indisponiveis/' + dataSelecionada);
+        remove(diaIndisponivelRef)
+          .then(() => {
+            alert(`Dia ${dataSelecionada} desmarcado como indisponível com sucesso!`);
+            mostrarAgendamentos();
+          })
+          .catch(error => alert("Erro ao desmarcar dia como indisponível: " + error));
+      }
+    };
+
+    // Inicialização da página
+    document.addEventListener('DOMContentLoaded', function() {
+      // Preenche os horários inicialmente
+      const selectHora = document.getElementById("hora");
+      selectHora.innerHTML = `
+        <option value="08:00">08:00</option>
+        <option value="09:00">09:00</option>
+        <option value="10:00">10:00</option>
+        <option value="11:00">11:00</option>
+        <option value="12:00">12:00</option>
+        <option value="13:00">13:00</option>
+        <option value="14:00">14:00</option>
+        <option value="15:00">15:00</option>
+        <option value="16:00">16:00</option>
+        <option value="17:00">17:00</option>
+      `;
+      
+      // Adiciona o evento de change para o campo de data
+      document.getElementById("data").addEventListener("change", atualizarHorariosDisponiveis);
+    });
+  </script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background-color: #f9f3f1;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #d36e9f;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .top-bar {
+      width: 100%;
+      background-color: #d36e9f;
+      padding: 15px;
+      color: white;
+      text-align: center;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+
+    .menu-bar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      background-color: #f1a7c5;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1.1em;
+      color: #fff;
+    }
+
+    .admin-panel {
+      margin-top: 80px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      display: none;
+      width: 100%;
+      max-width: 900px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+    }
+
+    select:disabled {
+      background-color: #f5f5f5;
+      color: #999;
+    }
+
+    button {
+      background-color: #d36e9f;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #c45c8b;
+    }
+
+    .calendar {
+      margin-top: 20px;
+    }
+
+    .services-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin: 30px 0;
+      max-width: 800px;
+    }
+
+    .service-item {
+      width: 150px;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+
+    .service-item:hover {
+      transform: translateY(-5px);
+    }
+
+    .service-item img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border: 2px solid #f1a7c5;
+    }
+
+    .service-item p {
+      margin-top: 10px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 30px 0;
+    }
+
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      color: #d36e9f;
+      font-weight: bold;
+      transition: all 0.3s;
+      padding: 10px 15px;
+      border-radius: 30px;
+      background-color: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .social-link:hover {
+      background-color: #f1a7c5;
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .social-link img {
+      width: 24px;
+      height: 24px;
+      margin-right: 10px;
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.9em;
+      color: #777;
+      padding: 20px;
+      border-top: 1px solid #eee;
+      width: 100%;
+    }
+
+    .agendamento {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .agendamento th {
+      background-color: #f1a7c5;
+      color: white;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .agendamento td {
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    .agendamento tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .agendamento button {
+      padding: 8px 12px;
+      background-color: #ff6b6b;
+    }
+
+    .agendamento button:hover {
+      background-color: #ff5252;
+    }
+
+    .admin-buttons {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .admin-buttons button {
+      flex: 1;
+      padding: 12px;
+    }
+
+    #adminPanel h2 {
+      color: #d36e9f;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .services-gallery {
+        gap: 15px;
+      }
+      
+      .service-item {
+        width: 120px;
+      }
+      
+      .admin-buttons {
+        flex-direction: column;
+      }
+      
+      .social-links {
+        flex-direction: column;
+        gap: 15px;
       }
     }
 
-    function verificarSenha() {
-      const senha = document.getElementById("senhaAdmin").value;
-      if (senha === senhaCorreta) {
-        mostrarAgendamentos();
-        toggleSidebar();
+    @media (max-width: 480px) {
+      .menu-bar {
+        font-size: 1.2em;
+      }
+
+      .form-container {
+        width: 90%;
+      }
+      
+      .service-item {
+        width: 100px;
+      }
+      
+      .service-item p {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="top-bar">MatheuzSilperTec</div>
+  <div class="menu-bar" onclick="solicitarSenha()">☰ Administração</div>
+
+  <h1>Agendamentos</h1>
+
+  <div class="form-container">
+    <label for="nome">Nome:</label>
+    <input type="text" id="nome" required placeholder="Digite seu nome completo" />
+    
+    <label for="servico">Serviço:</label>
+    <select id="servico">
+      <option value="Escova simples - R$40">Escova simples - R$40</option>
+      <option value="Hidratação capilar - R$60">Hidratação capilar - R$60</option>
+      <option value="Corte feminino - R$50">Corte feminino - R$50</option>
+      <option value="Progressiva - R$150">Progressiva - R$150</option>
+      <option value="Luzes - R$180">Luzes - R$180</option>
+      <option value="Coloração - R$100">Coloração - R$100</option>
+    </select>
+    
+    <label for="data">Data:</label>
+    <input type="date" id="data" required />
+    
+    <label for="hora">Horário:</label>
+    <select id="hora">
+      <option value="08:00">08:00</option>
+      <option value="09:00">09:00</option>
+      <option value="10:00">10:00</option>
+      <option value="11:00">11:00</option>
+      <option value="12:00">12:00</option>
+      <option value="13:00">13:00</option>
+      <option value="14:00">14:00</option>
+      <option value="15:00">15:00</option>
+      <option value="16:00">16:00</option>
+      <option value="17:00">17:00</option>
+    </select>
+    
+    <button onclick="confirmarAgendamento()">Confirmar Agendamento</button>
+  </div>
+
+  <!-- Galeria de Serviços -->
+  <h2 style="color: #d36e9f; margin-top: 20px;">Nossos Serviços</h2>
+  <div class="services-gallery">
+    <div class="service-item">
+      <img src="https://source.unsplash.com/random/300x300/?hairstyle,brazilian" alt="Escova simples">
+      <p>Escova simples</p>
+    </div>
+    <div class="service-item">
+      <img src="https://source.unsplash.com/random/300x300/?hair,haircare" alt="Hidratação">
+      <p>Hidratação capilar</p>
+    </div>
+    <div class="service-item">
+      <img src="https://source.unsplash.com/random/300x300/?haircut,women" alt="Corte feminino">
+      <p>Corte feminino</p>
+    </div>
+    <div class="service-item">
+      <img src="https://source.unsplash.com/random/300x300/?hair,straight" alt="Progressiva">
+      <p>Progressiva</p>
+    </div>
+    <div class="service-item">
+      <img src="https://source.unsplash.com/random/300x300/?hair,highlights" alt="Luzes">
+      <p>Luzes</p>
+    </div>
+    <div class="service-item">
+      <img src="https://source.unsplash.com/random/300x300/?hair,color" alt="Coloração">
+      <p>Coloração</p>
+    </div>
+  </div>
+
+  <!-- Redes Sociais -->
+  <div class="social-links">
+    <a href="https://www.instagram.com/" class="social-link" target="_blank">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram">
+      Instagram
+    </a>
+    <a href="https://wa.me/5521974260378" class="social-link" target="_blank">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
+      WhatsApp
+    </a>
+  </div>
+
+  <!-- Painel de Administração -->
+  <div class="admin-panel" id="adminPanel">
+    <h2>Painel de Administração</h2>
+    <div class="calendar">
+      <label for="calendario">Escolha a data:</label>
+      <input type="date" id="calendario" onchange="mostrarAgendamentos()" />
+    </div>
+    <div class="admin-buttons">
+      <button onclick="marcarDiaIndisponivel()">Marcar Dia Indisponível</button>
+      <button onclick="desmarcarDiaIndisponivel()">Desmarcar Dia Indisponível</button>
+    </div>
+    <table id="tabelaAgendamentos" class="agendamento">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Serviço</th>
+          <th>Hora</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <p>Desenvolvido por <a href="https://wa.me/5521974260378?text=Olá%20tenho%20interesse%20em%20criar%20um%20site%20para%20o%20meu%20negócio." style="color: #d36e9f; text-decoration: none;">MatheuzSilperTec</a></p>
+  </div>
+
+  <script>
+    function solicitarSenha() {
+      const senha = prompt("Digite a senha de administrador:");
+      if (senha === "1234") {
+        document.getElementById("adminPanel").style.display = "block";
       } else {
         alert("Senha incorreta!");
       }
     }
-
-    function mostrarAgendamentos() {
-      const painel = document.getElementById("painelAdmin");
-      const tabela = document.getElementById("tabelaAgendamentos");
-      tabela.innerHTML = "";
-
-      const ref = db.ref("agendamentos");
-      ref.once("value", snapshot => {
-        snapshot.forEach(child => {
-          const ag = child.val();
-          const row = tabela.insertRow();
-          row.innerHTML = `<td>${ag.nome}</td><td>${ag.servico}</td><td>${ag.data}</td><td>${ag.hora}</td>`;
-        });
-        painel.style.display = "block";
-      });
-    }
-
-    window.onload = () => {
-      const hoje = new Date().toISOString().split("T")[0];
-      document.getElementById("data").setAttribute("min", hoje);
-      mostrarValor();
-    };
   </script>
 </body>
 </html>
