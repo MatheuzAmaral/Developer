@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inventário de Caixas de Incêndio</title>
+
+  <!-- Firebase SDK Compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 1rem;
+    }
+    h1 { text-align: center; color: #b71c1c; }
+    form, .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    input[type="text"], select, button {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      flex: 1 1 220px;
+      max-width: 100%;
+    }
+    button {
+      background-color: #b71c1c;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      border: none;
+    }
+    button:hover { background-color: #8a1616; }
+    .inventory-item {
+      background: white;
+      margin: 10px auto;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      max-width: 700px;
+      word-wrap: break-word;
+    }
+    .inventory-item h2 { color: #b71c1c; margin-top: 0; }
+    @media (max-width: 600px) {
+      form, .filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      input[type="text"], select, button {
+        flex: 1 1 auto;
+        width: 100%;
+      }
+      .inventory-item { padding: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Inventário de Caixas de Incêndio</h1>
+
+  <form id="firebox-form">
+    <input type="text" id="numero" placeholder="Número da Caixa" required>
+    <input type="text" id="status" placeholder="Status" required>
+    <input type="text" id="extintores" placeholder="Extintores (ex: PQS 4kg 10/2024, CO2 6kg 05/2025)" required>
+    <input type="text" id="mangueiras" placeholder="Mangueiras (ex: 1.1/2 10/2024, 2.1/2 11/2025)" required>
+    <input type="text" id="observacao" placeholder="Observações">
+    <button type="submit">Adicionar Caixa</button>
+  </form>
+
+  <div class="filters">
+    <label for="filter-type">Filtrar por tipo:</label>
+    <select id="filter-type">
+      <option value="todos">Todos</option>
+      <option value="extintor">Extintor</option>
+      <option value="mangueira">Mangueira</option>
+    </select>
+
+    <label for="filter-month">Mês:</label>
+    <select id="filter-month"></select>
+
+    <label for="filter-year">Ano:</label>
+    <select id="filter-year"></select>
+
+    <button onclick="clearFilters()">Limpar Filtros</button>
+  </div>
+
+  <div id="inventory-list"></div>
+
+  <script>
+    // Firebase config e inicialização
+    const firebaseConfig = {
+      apiKey: "AIzaSyCy6Z4yOZNDRtGYOTlqkfX21OfnojWx-ng",
+      authDomain: "inventario-incendio.firebaseapp.com",
+      databaseURL: "https://inventario-incendio-default-rtdb.firebaseio.com",
+      projectId: "inventario-incendio",
+      storageBucket: "inventario-incendio.firebasestorage.app",
+      messagingSenderId: "97501911038",
+      appId: "1:97501911038:web:5c371f96aa1f96975f92af"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const form = document.getElementById("firebox-form");
+    const inventoryList = document.getElementById("inventory-list");
+    const filterType = document.getElementById("filter-type");
+    const filterMonth = document.getElementById("filter-month");
+    const filterYear = document.getElementById("filter-year");
+    const currentDate = new Date();
+
+    let inventory = [];
+    let inventoryKeys = [];
+
+    db.ref("inventory").on("value", snapshot => {
+      const data = snapshot.val();
+      inventory = data ? Object.values(data) : [];
+      inventoryKeys = data ? Object.keys(data) : [];
+      renderInventory();
+      populateDateFilters();
+    });
+
+    function parseDate(str) {
+      const [month, year] = str.split("/").map(Number);
+      return new Date(year, month - 1);
+    }
+
+    function formatItemsWithExpiry(items, currentDate) {
+      return items.map(item => {
+        const match = item.match(/(\d{2})\/(\d{4})/);
+        if (match) {
+          const itemDate = parseDate(match[0]);
+          const isExpired = itemDate < currentDate;
+          return `<span style="color:${isExpired ? 'red' : 'inherit'}">${item}</span>`;
+        }
+        return item;
+      }).join(", ");
+    }
+
+    function renderInventory() {
+      inventoryList.innerHTML = "";
+      inventory.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "inventory-item";
+        div.innerHTML = `
+          <h2>${item.numero} - ${item.status}</h2>
+          <p><strong>Extintores:</strong> ${formatItemsWithExpiry(item.extintores, currentDate)}</p>
+          <p><strong>Mangueiras:</strong> ${formatItemsWithExpiry(item.mangueiras, currentDate)}</p>
+          <p><strong>Observação:</strong> ${item.observacao}</p>
+          <button onclick="editBox(${index})">Editar</button>
+        `;
+        inventoryList.appendChild(div);
+      });
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const numero = document.getElementById("numero").value;
+      const status = document.getElementById("status").value;
+      const extintores = document.getElementById("extintores").value.split(",").map(e => e.trim());
+      const mangueiras = document.getElementById("mangueiras").value.split(",").map(m => m.trim());
+      const observacao = document.getElementById("observacao").value;
+
+      db.ref("inventory").push({ numero, status, extintores, mangueiras, observacao });
+      form.reset();
+    });
+
+    function populateDateFilters() {
+      const allDates = inventory.flatMap(item => [...item.extintores, ...item.mangueiras]);
+      const months = new Set();
+      const years = new Set();
+
+      allDates.forEach(entry => {
+        const match = entry.match(/(\d{2})\/(\d{4})/);
+        if (match) {
+          months.add(match[1]);
+          years.add(match[2]);
+        }
+      });
+
+      filterMonth.innerHTML = `<option value="">Todos</option>`;
+      filterYear.innerHTML = `<option value="">Todos</option>`;
+
+      [...months].sort().forEach(m => {
+        filterMonth.innerHTML += `<option value="${m}">${m}</option>`;
+      });
+
+      [...years].sort().forEach(y => {
+        filterYear.innerHTML += `<option value="${y}">${y}</option>`;
+      });
+    }
+
+    function clearFilters() {
+      filterType.value = "todos";
+      filterMonth.value = "";
+      filterYear.value = "";
+      renderInventory();
+    }
+
+    filterType.addEventListener("change", renderFilteredList);
+    filterMonth.addEventListener("change", renderFilteredList);
+    filterYear.addEventListener("change", renderFilteredList);
+
+    function renderFilteredList() {
+      const type = filterType.value;
+      const month = filterMonth.value;
+      const year = filterYear.value;
+
+      const filtered = inventory.filter(item => {
+        let itemsToCheck = [];
+        if (type === "extintor") itemsToCheck = item.extintores;
+        else if (type === "mangueira") itemsToCheck = item.mangueiras;
+        else itemsToCheck = [...item.extintores, ...item.mangueiras];
+
+        return itemsToCheck.some(entry => {
+          const match = entry.match(/(\d{2})\/(\d{4})/);
+          if (match) {
+            const [_, m, y] = match;
+            return (month === "" || m === month) && (year === "" || y === year);
+          }
+          return false;
+        });
+      });
+
+      inventoryList.innerHTML = "";
+      filtered.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "inventory-item";
+        div.innerHTML = `
+          <h2>${item.numero} - ${item.status}</h2>
+          <p><strong>Extintores:</strong> ${formatItemsWithExpiry(item.extintores, currentDate)}</p>
+          <p><strong>Mangueiras:</strong> ${formatItemsWithExpiry(item.mangueiras, currentDate)}</p>
+          <p><strong>Observação:</strong> ${item.observacao}</p>
+          <button onclick="editBox(${index})">Editar</button>
+        `;
+        inventoryList.appendChild(div);
+      });
+    }
+
+    function editBox(index) {
+      const item = inventory[index];
+      const key = inventoryKeys[index];
+
+      const numero = prompt("Editar número da caixa:", item.numero);
+      if (numero === null) return;
+
+      const status = prompt("Editar status da caixa:", item.status);
+      if (status === null) return;
+
+      const extintores = prompt("Editar extintores:", item.extintores.join(", "));
+      if (extintores === null) return;
+
+      const mangueiras = prompt("Editar mangueiras:", item.mangueiras.join(", "));
+      if (mangueiras === null) return;
+
+      const observacao = prompt("Editar observação:", item.observacao);
+      if (observacao === null) return;
+
+      db.ref("inventory/" + key).set({
+        numero: numero.trim(),
+        status: status.trim(),
+        extintores: extintores.split(",").map(e => e.trim()),
+        mangueiras: mangueiras.split(",").map(m => m.trim()),
+        observacao: observacao.trim()
+      });
+    }
+  </script>
+</body>
+</html>
